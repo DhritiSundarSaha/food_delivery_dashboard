@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: fd_postgres
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=food_delivery
+    volumes:
+      - fd_pgdata:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+  airflow:
+    image: apache/airflow:2.9.1-python3.9
+    container_name: fd_airflow
+    platform: linux/amd64
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/food_delivery
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./data_generation:/opt/airflow/data_generation
+    command: >
+      bash -c "airflow db upgrade &&
+               airflow users create --username admin --firstname admin --lastname user --role Admin --email admin@example.com --password admin &&
+               airflow scheduler & airflow webserver"
+    ports:
+      - "8080:8080"
+
+  superset:
+    image: apache/superset:3.0.0
+    container_name: fd_superset
+    platform: linux/amd64
+    depends_on:
+      - postgres
+    environment:
+      - SUPERSET_SECRET_KEY=anothersecretkey
+      - SUPERSET_DATABASE_URI=postgresql+psycopg2://airflow:airflow@postgres:5432/food_delivery
+    volumes:
+      - ./superset:/app/superset_home
+    command: >
+      bash -c "superset db upgrade &&
+               superset fab create-admin --username admin --firstname admin --lastname user --email admin@example.com --password admin &&
+               superset run -p 8088 --with-threads --reload --debugger"
+    ports:
+      - "8088:8088"
+
+volumes:
+  fd_pgdata:
