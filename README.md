@@ -3,8 +3,6 @@
 This project simulates a **real‑time food delivery analytics platform**.  
 Built end‑to‑end with Docker, Apache Airflow, PostgreSQL, and Apache Superset.
 
-![Architecture](docs/architecture.png)
-
 ## 🚀 Quick Start
 ```bash
 git clone https://github.com/yourname/food-delivery-pipeline-dashboard.git
